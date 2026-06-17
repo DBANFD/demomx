@@ -5,75 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Security Field Notes</title>
 <style>
-body{font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8;color:#222;margin:0}
-header{background:#0f172a;color:white;padding:40px}
+:root{--bg:#f4f6f8;--text:#222;--muted:#666;--card:#fff;--line:#ddd;--header:#0f172a;--link:#2563eb;--tag:#e5e7eb}
+*{box-sizing:border-box}
+body{font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;line-height:1.5}
+header{background:var(--header);color:white;padding:40px 24px}
+.header-inner{max-width:1100px;margin:auto}
 main{max-width:1100px;margin:auto;padding:20px}
-.card{background:white;border:1px solid #ddd;border-radius:10px;padding:20px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:20px}
 h1,h2{margin-top:0}
+.subtitle{color:#cbd5e1;max-width:950px}
 table{width:100%;border-collapse:collapse}
-th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
-a{text-decoration:none;color:#2563eb}
-.tag{display:inline-block;background:#e5e7eb;padding:4px 8px;border-radius:6px;font-size:12px}
-.footer{color:#666;font-size:12px;margin-top:20px}
-.subtitle{color:#cbd5e1}
+th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+a{text-decoration:none;color:var(--link)}
+a:hover{text-decoration:underline}
+.tag{display:inline-block;background:var(--tag);padding:4px 8px;border-radius:6px;font-size:12px;white-space:nowrap}
+.footer{color:var(--muted);font-size:12px;margin-top:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.pill{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}
 </style>
 </head>
 <body>
 <header>
+<div class="header-inner">
 <h1>Security Field Notes</h1>
-<p class="subtitle">Real-world troubleshooting, investigations, architecture decisions, and lessons learned from Microsoft, Azure, Defender, Entra ID, Sentinel, AWS, and GCP environments.</p>
+<p class="subtitle">Practical troubleshooting notes, investigations, architecture decisions, and lessons learned from Microsoft security, Azure, Defender, Entra ID, Sentinel, AWS, and GCP environments.</p>
+</div>
 </header>
-
 <main>
-
 <div class="card">
 <h2>About</h2>
-<p>A collection of anonymized troubleshooting cases, implementation notes, operational lessons learned, and security engineering investigations.</p>
+<p>This site contains technical write-ups based on real-world security engineering and operations scenarios. Content is sanitized before publication and should be validated against the target environment before production use.</p>
 </div>
 
 <div class="card">
 <h2>Published Articles</h2>
-
 <table>
 <tr>
 <th>Title</th>
 <th>Category</th>
 <th>Status</th>
 </tr>
-
 <tr>
-<td>
-<a href="Server2016_Defender_Troubleshooting.html">
-Windows Server 2016 Defender AV Disabled / Passive Mode Investigation
-</a>
-</td>
+<td><a href="Server2016_Defender_Troubleshooting.html">Windows Server 2016 Defender AV disabled / passive mode investigation</a></td>
 <td><span class="tag">Defender for Endpoint</span></td>
 <td>Published</td>
 </tr>
-
+<tr>
+<td><a href="Windows_Server_2016_MDE_Onboarding_Remediation.html">Windows Server 2016 MDE onboarding remediation</a></td>
+<td><span class="tag">Defender for Endpoint</span></td>
+<td>Published</td>
+</tr>
 </table>
 </div>
 
 <div class="card">
 <h2>Categories</h2>
-<ul>
-<li>Defender for Endpoint</li>
-<li>Defender for Cloud</li>
-<li>Microsoft Sentinel</li>
-<li>Entra ID</li>
-<li>Microsoft 365 Defender</li>
-<li>Azure Security</li>
-<li>AWS Security</li>
-<li>GCP Security</li>
-<li>Identity & Access Management</li>
-<li>Cloud Architecture</li>
-</ul>
+<div class="grid">
+<div class="pill">Defender for Endpoint</div>
+<div class="pill">Defender for Cloud</div>
+<div class="pill">Microsoft Sentinel</div>
+<div class="pill">Entra ID</div>
+<div class="pill">Microsoft Defender XDR</div>
+<div class="pill">Azure Security</div>
+<div class="pill">AWS Security</div>
+<div class="pill">GCP Security</div>
+<div class="pill">Identity &amp; Access Management</div>
+<div class="pill">Cloud Architecture</div>
 </div>
-
-<div class="footer">
-Security Field Notes
 </div>
-
+<div class="footer">Security Field Notes</div>
 </main>
 </body>
 </html>

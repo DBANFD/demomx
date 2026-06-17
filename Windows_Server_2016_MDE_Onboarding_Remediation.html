@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windows Server 2016 Defender onboarding remediation</title>
+<style>
+:root{--bg:#f4f6f8;--text:#1f2937;--muted:#6b7280;--card:#fff;--line:#d9e0e8;--blue:#174a72;--blue2:#0f172a;--accent:#2563eb;--warn:#fff8df;--warnline:#e2c75b;--code:#f1f5f9}
+*{box-sizing:border-box}
+body{font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;line-height:1.55}
+header{background:var(--blue2);color:white;padding:38px 24px}
+.header-inner{max-width:1100px;margin:auto}
+main{max-width:1100px;margin:auto;padding:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+h1{font-size:34px;margin:0 0 8px}
+h2{font-size:24px;margin:0 0 14px;border-bottom:2px solid var(--blue);padding-bottom:8px;color:var(--blue)}
+h3{font-size:19px;margin:24px 0 8px;color:#111827}
+p{margin:0 0 14px}.subtitle{color:#cbd5e1;max-width:900px}.meta{color:var(--muted);font-size:13px;margin-top:8px}.tag{display:inline-block;background:#e5e7eb;color:#111827;padding:4px 8px;border-radius:6px;font-size:12px;margin-right:6px}.note{background:var(--warn);border:1px solid var(--warnline);border-radius:8px;padding:14px;margin:16px 0}table{width:100%;border-collapse:collapse;margin:12px 0 18px;background:#fff}th{background:var(--blue);color:white;text-align:left}th,td{padding:10px 12px;border:1px solid var(--line);vertical-align:top}tr:nth-child(even) td{background:#f8fafc}code,pre{font-family:Consolas,Menlo,monospace}pre{background:var(--code);padding:14px;border-radius:8px;overflow:auto;border:1px solid #dbe3ec}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}ul,ol{margin-top:8px}.footer{color:var(--muted);font-size:12px;text-align:center;margin:30px 0}.toc a{display:block;margin:5px 0}.status-ok{color:#15803d;font-weight:600}.status-bad{color:#b91c1c;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+<div class="header-inner">
+<h1>Windows Server 2016 Defender onboarding remediation</h1>
+<p class="subtitle">Field note covering a Microsoft Defender for Endpoint onboarding failure caused by Windows component store corruption on Windows Server 2016.</p>
+<div class="meta"><span class="tag">Defender for Endpoint</span><span class="tag">Windows Server 2016</span><span class="tag">DISM</span><span class="tag">Component Store</span></div>
+</div>
+</header>
+<main>
+<section class="card">
+<h2>Overview</h2>
+<p>This case covers a Windows Server 2016 onboarding failure where the Microsoft Defender deployment tool repeatedly failed when enabling the built-in Windows Defender feature. The relevant blocker was not passive mode, policy, connectivity, or the onboarding package. The blocker was Windows servicing/component store damage.</p>
+<table>
+<tr><th>Item</th><th>Details</th></tr>
+<tr><td>Device</td><td>Anonymized Windows Server 2016 host</td></tr>
+<tr><td>Operating system</td><td>Windows Server 2016 x64, build 14393</td></tr>
+<tr><td>Symptom</td><td>Microsoft Defender deployment tool fails on every run. The Defender Antivirus feature will not enable.</td></tr>
+<tr><td>Tool exit code</td><td>710, EnableFeatureFailed</td></tr>
+<tr><td>Observed pattern</td><td>Multiple failed runs with the same failure point and the same error signature.</td></tr>
+<tr><td>Root cause</td><td>The Windows component store cannot finalize the Windows Defender feature because a referenced assembly is missing. DISM cannot self-repair without a valid servicing source.</td></tr>
+</table>
+<div class="note"><strong>Key point:</strong> Re-running the deployment tool, offboarding and re-onboarding, or changing passive mode settings will continue to fail until the Windows component store is repaired.</div>
+</section>
+<section class="card toc">
+<h2>Contents</h2>
+<a href="#evidence">1. Evidence from logs</a>
+<a href="#remediation">2. Remediation sequence</a>
+<a href="#verification">3. Verification checklist</a>
+<a href="#if-fails">4. If DISM repair still fails</a>
+<a href="#avoid">5. What not to do</a>
+<a href="#scale">6. Deployment at scale</a>
+<a href="#advanced">7. Advanced recovery</a>
+<a href="#references">8. References</a>
+</section>
+<section class="card" id="evidence">
+<h2>1. Evidence from logs</h2>
+<h3>Deployment tool failure</h3>
+<p>The deployment tool completed prerequisite checks, downloads, telemetry, and connectivity checks. The recurring failure occurred when DISM attempted to enable the Windows Defender feature.</p>
+<pre>Failed to enable feature 'Windows-Defender', DISM exit code: 00003701
+Code: EnableFeatureFailed. Failed to enable the 'Windows-Defender' feature, error: 0x00003701
+Microsoft Defender deployment tool completed, exit code: 710 [EnableFeatureFailed]</pre>
+<h3>Relevant DISM and CBS error codes</h3>
+<table>
+<tr><th>Error code</th><th>Where seen</th><th>Meaning</th></tr>
+<tr><td>0x00003701 / 14081</td><td>Defender deployment tooling log</td><td>DISM exit code returned while enabling the Windows Defender feature. Microsoft documents this as 0x3701, meaning the referenced assembly could not be found.</td></tr>
+<tr><td>0x80073701</td><td>dism.log / CBS</td><td>ERROR_SXS_ASSEMBLY_MISSING. A component required by the install is missing from the component store.</td></tr>
+<tr><td>0x800f081f</td><td>dism.log during RestoreHealth</td><td>The source files could not be found. DISM /RestoreHealth could not locate a repair source.</td></tr>
+</table>
+<h3>Component store state</h3>
+<p>The parent Defender package was present, but the Defender feature and related sub-packages were stuck in a staged state instead of fully installed.</p>
+<table>
+<tr><th>Package or feature</th><th>Current state</th><th>Target state</th></tr>
+<tr><td>Windows-Defender-Server-Core-Package parent</td><td class="status-ok">Installed</td><td>Installed</td></tr>
+<tr><td>Windows-Defender-Features</td><td class="status-ok">Installed</td><td>Installed</td></tr>
+<tr><td>Windows-Defender AV feature</td><td class="status-bad">Staged</td><td>Installed</td></tr>
+<tr><td>Server-Service, Core, NIS, and Management sub-packages</td><td class="status-bad">Staged</td><td>Installed</td></tr>
+</table>
+<p>This sequence points to a Windows servicing issue. The Defender onboarding process cannot complete because the operating system cannot enable the required Defender feature.</p>
+</section>
+<section class="card" id="remediation">
+<h2>2. Remediation sequence</h2>
+<p>Run the remediation from an elevated Command Prompt or PowerShell session. Take a backup or snapshot before starting and plan for at least one reboot.</p>
+<h3>Step 1. Provide a matching repair source</h3>
+<ol>
+<li>Obtain a Windows Server 2016 <code>install.wim</code> or <code>install.esd</code> matching the server edition and build as closely as possible.</li>
+<li>Mount the ISO, for example as drive <code>D:</code>.</li>
+<li>Identify the correct image index inside the WIM.</li>
+</ol>
+<pre>Dism /Get-WimInfo /WimFile:D:\sources\install.wim</pre>
+<h3>Step 2. Repair the component store from that source</h3>
+<p>Use <code>/LimitAccess</code> to force DISM to use the local media instead of attempting Windows Update again.</p>
+<pre>Dism /Online /Cleanup-Image /RestoreHealth /Source:wim:D:\sources\install.wim:&lt;index&gt; /LimitAccess
+sfc /scannow</pre>
+<p>Confirm that DISM reports the restore operation as completed successfully. If this step fails, move to the escalation paths later in this note.</p>
+<h3>Step 3. Bring Windows servicing current</h3>
+<ul>
+<li>Install a current Servicing Stack Update for Windows Server 2016.</li>
+<li>Install the latest applicable Cumulative Update.</li>
+<li>Reboot after servicing updates.</li>
+<li>If the LCU itself will not install, treat that as the same component store issue surfacing elsewhere.</li>
+</ul>
+<h3>Step 4. Enable the Defender feature manually</h3>
+<pre>Dism /Online /Enable-Feature /FeatureName:Windows-Defender-Features /All
+Dism /Online /Enable-Feature /FeatureName:Windows-Defender /All</pre>
+<p>Reboot, then confirm that the Defender feature is installed and that the <code>windefend</code> service can be queried.</p>
+<h3>Step 5. Re-run onboarding</h3>
+<ul>
+<li>Download a fresh deployment tool and onboarding package from the Defender portal.</li>
+<li>Run onboarding again.</li>
+<li>With the component store repaired, the EnableFeature step should complete and the deployment tool should exit with code 0 instead of 710.</li>
+<li>Apply the latest Defender platform and security intelligence updates after onboarding.</li>
+</ul>
+</section>
+<section class="card" id="verification">
+<h2>3. Verification checklist</h2>
+<table>
+<tr><th>Check</th><th>Expected result</th></tr>
+<tr><td><code>Dism /Online /Get-FeatureInfo /FeatureName:Windows-Defender</code></td><td><code>State : Enabled</code></td></tr>
+<tr><td><code>sc.exe query windefend</code></td><td><code>STATE : 4 RUNNING</code></td></tr>
+<tr><td><code>sc.exe query sense</code></td><td><code>STATE : 4 RUNNING</code></td></tr>
+<tr><td><code>Get-MpComputerStatus | select AMRunningMode, AMServiceEnabled</code></td><td><code>AMServiceEnabled : True</code> and <code>AMRunningMode</code> populated</td></tr>
+<tr><td>Defender deployment tool</td><td>Exit code 0. No longer exit code 710.</td></tr>
+</table>
+</section>
+<section class="card" id="if-fails">
+<h2>4. If DISM repair still fails</h2>
+<p>If <code>DISM /RestoreHealth</code> fails even with a valid local source, the component store damage is deeper than a single missing payload. Work through the following options in order.</p>
+<ol>
+<li>Search CBS.log for the specific package named alongside <code>0x80073701</code>. Download that exact package from Microsoft Update Catalog, expand it, and add it with <code>Dism /Online /Add-Package</code>. Then retry enabling the Defender feature.</li>
+<li>Try an alternate clean source image and repeat <code>/RestoreHealth</code>.</li>
+<li>Perform an in-place repair upgrade of Windows Server 2016 from matching or newer media while keeping apps, files, and settings.</li>
+<li>Open or continue a Microsoft support case for Windows Server and attach CBS.log, dism.log, and the Defender deployment tool log.</li>
+</ol>
+</section>
+<section class="card" id="avoid">
+<h2>5. What not to do</h2>
+<ul>
+<li>Do not keep re-running the Defender deployment tool expecting a different result. It fails at the same DISM step.</li>
+<li>Do not apply passive mode or active mode procedures to this server before the Defender feature installs. That addresses a different problem.</li>
+<li>Do not hand-edit service <code>Start</code> values for <code>windefend</code>, <code>wdfilter</code>, <code>wdboot</code>, <code>wdnisdrv</code>, or <code>wdnissvc</code> under <code>HKLM\SYSTEM\CurrentControlSet\Services</code>. That can create an unsupported state.</li>
+</ul>
+</section>
+<section class="card" id="scale">
+<h2>6. Deployment at scale</h2>
+<p>Split the work by tool. Use BigFix, Configuration Manager, or another endpoint execution platform for component store repair, feature enablement, reboot handling, and onboarding. Use Intune only after onboarding for Defender policy management.</p>
+<div class="note"><strong>Important:</strong> Windows Server 2016 cannot enroll in Intune MDM. Intune can manage Defender security settings only after the server is already onboarded and healthy through Defender for Endpoint security settings management.</div>
+<h3>Source staging</h3>
+<p>At scale, the repair source becomes the main operational problem. Host matching Windows Server 2016 sources for the editions and installation types in the fleet, such as Standard vs Datacenter and Server Core vs Desktop Experience. Copy the WIM locally before running DISM to avoid reading multi-GB media across the WAN.</p>
+<h3>Detection logic example</h3>
+<pre>$feat = (Dism /Online /Get-FeatureInfo /FeatureName:Windows-Defender) -match 'State :'
+$svc = Get-Service windefend -ErrorAction SilentlyContinue
+if ($feat -notmatch 'Enabled' -or -not $svc) { exit 1 }
+exit 0</pre>
+<h3>Remediation action example</h3>
+<pre>$src = 'C:\Temp\WS2016_repair\install.wim'
+$idx = 1
+Dism /Online /Cleanup-Image /RestoreHealth /Source:wim:$src:$idx /LimitAccess
+Dism /Online /Enable-Feature /FeatureName:Windows-Defender-Features /All /NoRestart
+Dism /Online /Enable-Feature /FeatureName:Windows-Defender /All /NoRestart
+# Reboot here, then run onboarding:
+& 'C:\Deploy\DefenderDT.exe' -Quiet -Verbose -File:'C:\Deploy\WindowsDefenderATP.onboarding'</pre>
+<h3>Reporting</h3>
+<p>Publish the Defender feature state, <code>windefend</code> service state, and last deployment tool exit code as endpoint management properties. This provides a fleet view of remediated, still failing with 710, and fully onboarded servers.</p>
+<h3>Rollout discipline</h3>
+<ul>
+<li>Start with a pilot ring of 5 to 10 servers.</li>
+<li>Stagger reboots into maintenance windows.</li>
+<li>Escalate servers where <code>RestoreHealth</code> still fails with a valid source.</li>
+</ul>
+</section>
+<section class="card" id="advanced">
+<h2>7. Advanced recovery</h2>
+<p>In some cases, a plain Windows Server 2016 install.wim cannot repair the issue because the missing assemblies belong to cumulative updates already installed on the server. A base install.wim contains RTM files and cannot provide patched component versions.</p>
+<h3>Method A. Reinstall the exact updates named in CBS</h3>
+<p>Find the KBs named in CBS.log and reinstall the corresponding Windows Server 2016 x64 packages from Microsoft Update Catalog.</p>
+<pre>Dism /Online /Cleanup-Image /ScanHealth
+Dism /Online /Get-Packages /Format:Table | findstr /i Pending
+Dism /Online /Add-Package /PackagePath:C:\Repair\windows10.0-kbxxxxxxx-x64.msu</pre>
+<p>Reboot and retry enabling the Defender feature.</p>
+<h3>Method B. Repair from a patch-matched source</h3>
+<p>Create a repair source whose assembly versions match the server by servicing a mounted WIM with the same SSU and LCU level.</p>
+<pre>Dism /Mount-Image /ImageFile:D:\sources\install.wim /Index:&lt;idx&gt; /MountDir:C:\mount
+Dism /Image:C:\mount /Add-Package /PackagePath:C:\Repair\SSU.msu
+Dism /Image:C:\mount /Add-Package /PackagePath:C:\Repair\windows10.0-kbxxxxxxx-x64.msu
+Dism /Online /Cleanup-Image /RestoreHealth /Source:C:\mount\Windows /LimitAccess
+Dism /Unmount-Image /MountDir:C:\mount /Discard</pre>
+<h3>Method C. In-place repair upgrade</h3>
+<p>If the component store is invalid and a consistency check is pending, the most reliable remediation is an in-place repair upgrade. Use Server 2016 media slipstreamed to the same or a higher build than the server, choose to keep apps and files, and allow setup to download updates.</p>
+<div class="note"><strong>Caution:</strong> Take a full backup or snapshot first. For domain controllers, review the supported repair upgrade guidance and ensure a system state backup exists.</div>
+</section>
+<section class="card" id="references">
+<h2>8. References</h2>
+<table>
+<tr><th>#</th><th>What it supports</th><th>Link</th></tr>
+<tr><td>1</td><td>Defender deployment tool exit code 710 and Server 2016 error 14081 / 0x3701 guidance.</td><td><a href="https://learn.microsoft.com/en-us/defender-endpoint/defender-deployment-tool-windows">Microsoft Learn: Defender deployment tool</a></td></tr>
+<tr><td>2</td><td>Enable and update Microsoft Defender Antivirus on Windows Server, including prerequisites and DISM feature commands.</td><td><a href="https://learn.microsoft.com/en-us/defender-endpoint/enable-update-mdav-to-latest-ws">Microsoft Learn: Enable and update MDAV on Windows Server</a></td></tr>
+<tr><td>3</td><td>Onboard Windows Server to Microsoft Defender for Endpoint.</td><td><a href="https://learn.microsoft.com/en-us/defender-endpoint/onboard-server">Microsoft Learn: Onboard Windows Server</a></td></tr>
+<tr><td>4</td><td>DISM /RestoreHealth source repair guidance.</td><td><a href="https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/repair-a-windows-image">Microsoft Learn: Repair a Windows image</a></td></tr>
+<tr><td>5</td><td>ERROR_SXS_ASSEMBLY_MISSING remediation guidance.</td><td><a href="https://learn.microsoft.com/en-us/answers/questions/1319502/(hresult-0x80073701-error-sxs-assembly-missing)">Microsoft Q&amp;A: 0x80073701</a></td></tr>
+</table>
+</section>
+<div class="footer">Security Field Notes</div>
+</main>
+</body>
+</html>
