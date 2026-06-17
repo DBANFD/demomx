@@ -5,74 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Security Field Notes</title>
 <style>
-:root{--bg:#f4f6f8;--text:#222;--muted:#666;--card:#fff;--line:#ddd;--header:#0f172a;--link:#2563eb;--tag:#e5e7eb}
-*{box-sizing:border-box}
-body{font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;line-height:1.5}
-header{background:var(--header);color:white;padding:40px 24px}
-.header-inner{max-width:1100px;margin:auto}
-main{max-width:1100px;margin:auto;padding:20px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:20px}
-h1,h2{margin-top:0}
-.subtitle{color:#cbd5e1;max-width:950px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-a{text-decoration:none;color:var(--link)}
-a:hover{text-decoration:underline}
-.tag{display:inline-block;background:var(--tag);padding:4px 8px;border-radius:6px;font-size:12px;white-space:nowrap}
-.footer{color:var(--muted);font-size:12px;margin-top:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-.pill{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}
+:root{--bg:#f4f6f8;--text:#222;--muted:#5f6673;--card:#fff;--line:#d9dee7;--header:#0f172a;--link:#2563eb;--tag:#e5e7eb;--tag2:#eef2ff;--code:#111827;--warning:#fff7ed;--warning-border:#fdba74}*{box-sizing:border-box}body{font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;line-height:1.55}header{background:var(--header);color:white;padding:40px 24px}.header-inner,main{max-width:1100px;margin:auto}h1,h2,h3{margin-top:0}h1{font-size:38px;margin-bottom:10px}.subtitle{color:#cbd5e1;max-width:900px;font-size:17px}main{padding:24px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:20px}.meta{color:var(--muted);font-size:14px;margin-bottom:18px}a{text-decoration:none;color:var(--link)}a:hover{text-decoration:underline}.tag{display:inline-block;background:var(--tag);padding:4px 8px;border-radius:6px;font-size:12px;color:#374151}.tag-blue{background:var(--tag2);color:#3730a3}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:13px;color:#475569}ul,ol{padding-left:22px}li{margin:7px 0}pre{background:var(--code);color:#f9fafb;padding:16px;border-radius:8px;overflow-x:auto;font-size:13px;line-height:1.55}code{font-family:Consolas,Monaco,monospace}.inline-code{background:#eef2f7;border:1px solid #d8dee8;border-radius:4px;padding:1px 5px;font-family:Consolas,Monaco,monospace;font-size:.92em}.note{background:#eff6ff;border-left:4px solid #60a5fa;padding:14px 16px;border-radius:8px;margin:16px 0}.warning{background:var(--warning);border-left:4px solid var(--warning-border);padding:14px 16px;border-radius:8px;margin:16px 0}.footer{color:var(--muted);font-size:12px;margin-top:22px}.article-nav{margin-bottom:16px}.kv{display:grid;grid-template-columns:210px 1fr;gap:8px 16px}.kv div{padding:8px 0;border-bottom:1px solid var(--line)}.kv div:nth-child(odd){font-weight:600;color:#334155}@media(max-width:700px){h1{font-size:30px}table,thead,tbody,tr,th,td{display:block}th{display:none}td{border-bottom:none;padding:6px 0}tr{border-bottom:1px solid var(--line);padding:10px 0}.kv{grid-template-columns:1fr}.kv div:nth-child(odd){border-bottom:none;padding-bottom:0}}
 </style>
 </head>
 <body>
-<header>
-<div class="header-inner">
-<h1>Security Field Notes</h1>
-<p class="subtitle">Practical troubleshooting notes, investigations, architecture decisions, and lessons learned from Microsoft security, Azure, Defender, Entra ID, Sentinel, AWS, and GCP environments.</p>
-</div>
-</header>
+<header><div class="header-inner"><h1>Security Field Notes</h1><p class="subtitle">Practical troubleshooting notes, implementation guides, and architecture decisions from Microsoft security, Azure, Entra ID, Defender, Sentinel, AWS, and GCP environments.</p></div></header>
 <main>
-<div class="card">
-<h2>About</h2>
-<p>This site contains technical write-ups based on real-world security engineering and operations scenarios. Content is sanitized before publication and should be validated against the target environment before production use.</p>
-</div>
-
-<div class="card">
-<h2>Published Articles</h2>
-<table>
-<tr>
-<th>Title</th>
-<th>Category</th>
-<th>Status</th>
-</tr>
-<tr>
-<td><a href="Server2016_Defender_Troubleshooting.html">Windows Server 2016 Defender AV disabled / passive mode investigation</a></td>
-<td><span class="tag">Defender for Endpoint</span></td>
-<td>Published</td>
-</tr>
-<tr>
-<td><a href="Windows_Server_2016_MDE_Onboarding_Remediation.html">Windows Server 2016 MDE onboarding remediation</a></td>
-<td><span class="tag">Defender for Endpoint</span></td>
-<td>Published</td>
-</tr>
-</table>
-</div>
-
-<div class="card">
-<h2>Categories</h2>
-<div class="grid">
-<div class="pill">Defender for Endpoint</div>
-<div class="pill">Defender for Cloud</div>
-<div class="pill">Microsoft Sentinel</div>
-<div class="pill">Entra ID</div>
-<div class="pill">Microsoft Defender XDR</div>
-<div class="pill">Azure Security</div>
-<div class="pill">AWS Security</div>
-<div class="pill">GCP Security</div>
-<div class="pill">Identity &amp; Access Management</div>
-<div class="pill">Cloud Architecture</div>
-</div>
-</div>
+<div class="card"><h2>About</h2><p>This site is a public archive of anonymized security notes. The content is written as practical field guidance rather than formal product documentation.</p></div>
+<div class="card"><h2>Published Articles</h2><table><tr><th>Title</th><th>Category</th><th>Status</th></tr><tr><td><a href="Windows_Server_2016_MDE_Onboarding_Remediation.html">Windows Server 2016 MDE Onboarding Remediation</a></td><td><span class="tag">Defender for Endpoint</span></td><td>Published</td></tr><tr><td><a href="Server2016_Defender_Troubleshooting.html">Windows Server 2016 Defender AV Disabled / Passive Mode Investigation</a></td><td><span class="tag">Defender for Endpoint</span></td><td>Published</td></tr><tr><td><a href="Azure_Bastion_OnPrem_RDP.html">Azure Bastion to On-Prem RDP</a></td><td><span class="tag">Azure Security</span></td><td>Published</td></tr><tr><td><a href="Entra_Private_Access_Setup.html">Set Up Microsoft Entra Private Access</a></td><td><span class="tag">Entra ID</span></td><td>Published</td></tr></table></div>
+<div class="card"><h2>Categories</h2><ul><li>Defender for Endpoint</li><li>Defender for Cloud</li><li>Microsoft Sentinel</li><li>Entra ID</li><li>Azure Security</li><li>AWS Security</li><li>GCP Security</li><li>Identity and Access Management</li><li>Cloud Architecture</li></ul></div>
 <div class="footer">Security Field Notes</div>
 </main>
 </body>
